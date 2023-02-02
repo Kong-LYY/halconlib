@@ -1,0 +1,304 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hdevelop file_version="1.2" halcon_version="20.11.1.0">
+<procedure name="main">
+<interface/>
+<body>
+<c>* 1、可视化yolov5 标注是否正确</c>
+<c>* 2、可视化对比标注和推理结果差异</c>
+<c>* 3、统计差异性</c>
+<l>list_dir := 'augument_3class/'</l>
+<c></c>
+<c></c>
+<l>images_file_name := list_dir + 'images/val'</l>
+<l>images_file_name := 'F:/MicroVison/2021-11-24-九院-大口径光学玻璃/软件/LargeApertureOpticalElement/halcon/数据处理相关代码/orin_data_overpaint/2020-07-21-14-07-平面元件(0930-VI-0156)前表面-1-修复前--真空隔离片--10mm厚/'</l>
+<c></c>
+<l>list_image_files (images_file_name, 'default', [], ImageFiles)</l>
+<l>read_image (Image, ImageFiles[0])</l>
+<l>get_image_size (Image, Width, Height)</l>
+<l>label_path := list_dir + 'labels/val/'</l>
+<l>label_path := 'F:/MicroVison/2021-11-24-九院-大口径光学玻璃/软件/LargeApertureOpticalElement/halcon/数据处理相关代码/label_result/2020-07-21-14-07-平面元件(0930-VI-0156)前表面-1-修复前--真空隔离片--10mm厚/'</l>
+<c></c>
+<l>* infer_path := 'F:/MicroVison/2021-11-24-九院-大口径光学玻璃/算法/汇报/small_test/infer/labels/'</l>
+<l>* infer_path :='F:/MicroVison/2021-11-24-九院-大口径光学玻璃/算法/汇报/2022-11-09-test/labels_real/labels/'</l>
+<l>infer_path := ''</l>
+<c>* 筛选缺陷尺寸</c>
+<l>low_thre_length  :=  4</l>
+<l>high_thre_length := 20</l>
+<c></c>
+<c></c>
+<l>all_number := 0</l>
+<c></c>
+<l>miss_count := 0</l>
+<l>for Index := 0 to |ImageFiles|-1 by 1</l>
+<l>    read_image (Image, ImageFiles[Index])</l>
+<l>    get_image_size (Image, image_width, image_height)</l>
+<c>    </c>
+<l>    tuple_split (ImageFiles[Index], '/', file_names)</l>
+<l>    tuple_split (file_names[|file_names|-1], '.', image_name_split)</l>
+<c>    </c>
+<c>    * 标注结果</c>
+<l>    open_yolov5_label (label_path + image_name_split[0] + '.txt', row1, col1, row2, col2, lack_class1)</l>
+<c> </c>
+<c>    * 推理结果</c>
+<l>    open_yolov5_label (infer_path + image_name_split[0] + '.txt', rowl1, coll1, rowl2, coll2, lack_class2)</l>
+<c>    </c>
+<l>    gen_empty_obj (Rectangle)</l>
+<l>    if (|row1| != 0)</l>
+<l>        tuple_sort (lack_class1, Sorted)</l>
+<l>        class_unique1 := uniq(Sorted)</l>
+<c>        </c>
+<c>        </c>
+<l>        row1 := row1 * image_height</l>
+<l>        row2 := row2 * image_height</l>
+<l>        col1 := col1 * image_width</l>
+<l>        col2 := col2 * image_width</l>
+<l>        gen_rectangle1 (Rectangle, row1, col1, row2, col2)</l>
+<c>        </c>
+<l>    endif</l>
+<l>    connection (Rectangle, ConnectedRegions1)</l>
+<l>    count_obj (ConnectedRegions1, label_count)</l>
+<c>    </c>
+<l>    all_number := all_number + label_count</l>
+<c> </c>
+<l>    gen_empty_obj (Rectangle_infer)</l>
+<l>    if (|rowl1| != 0)</l>
+<l>        rowl1 := rowl1 * image_height</l>
+<l>        rowl2 := rowl2 * image_height</l>
+<l>        coll1 := coll1 * image_width</l>
+<l>        coll2 := coll2 * image_width</l>
+<l>        gen_rectangle1 (Rectangle_infer, rowl1, coll1, rowl2, coll2)</l>
+<l>    endif</l>
+<c>    </c>
+<l>    dev_clear_window ()</l>
+<l>    dev_display (Image)</l>
+<l>    dev_set_draw ('margin')</l>
+<l>    dev_set_color ('green')</l>
+<l>    dev_display (Rectangle)</l>
+<l>    dev_set_color ('red')</l>
+<l>    dev_display (Rectangle_infer)</l>
+<c>    </c>
+<c>    </c>
+<c>    * 统计漏检缺陷数</c>
+<c>    </c>
+<l>*     dilation_circle (Rectangle_infer, RegionDilation, 8)</l>
+<l>*     difference (Rectangle, RegionDilation, RegionDifference)</l>
+<l>*     connection (RegionDifference, ConnectedRegions)</l>
+<l>*     select_shape (ConnectedRegions, SelectedRegions, ['width','height'], 'or', [4,4], [999999,999999])</l>
+<l>*     count_obj (SelectedRegions, Number)</l>
+<c>    </c>
+<l>*     if (Number&gt;0)</l>
+<l>*         if (lack_class1[0]==0)</l>
+<l>*             stop ()</l>
+<l>*             miss_count := miss_count + Number</l>
+<c>            </c>
+<l>*         endif</l>
+<c>        </c>
+<l>*     endif</l>
+<c>    </c>
+<l>    stop ()</l>
+<l>endfor</l>
+<c></c>
+<l>ratio := miss_count*1.0/all_number</l>
+</body>
+<docu id="main">
+<parameters/>
+</docu>
+</procedure>
+<procedure name="make_yolov5_path">
+<interface>
+<ic>
+<par name="result_path" base_type="ctrl" dimension="0"/>
+</ic>
+<oc>
+<par name="crop_lack_path" base_type="ctrl" dimension="0"/>
+<par name="train_images_path" base_type="ctrl" dimension="0"/>
+<par name="train_labels_path" base_type="ctrl" dimension="0"/>
+<par name="val_images_path" base_type="ctrl" dimension="0"/>
+<par name="val_labels_path" base_type="ctrl" dimension="0"/>
+</oc>
+</interface>
+<body>
+<l>crop_lack_path := result_path+'/crop_lack/'</l>
+<l>train_images_path := result_path+'/images/train/'</l>
+<l>train_labels_path := result_path+'/labels/train/'</l>
+<l>val_images_path := result_path+'/images/val/'</l>
+<l>val_labels_path := result_path+'/labels/val/'</l>
+<l>try</l>
+<l>    make_dir (result_path)</l>
+<l>    make_dir (result_path+'/crop_lack/')</l>
+<l>    make_dir (result_path+'/images/')</l>
+<l>    make_dir (result_path+'/labels/')</l>
+<l>    make_dir (result_path+'/images/train/') </l>
+<l>    make_dir (result_path+'/labels/train')</l>
+<l>    make_dir (result_path+'/images/val/')</l>
+<l>    make_dir (result_path+'/labels/val/')</l>
+<l>catch (exception)</l>
+<l>endtry</l>
+</body>
+<docu id="make_yolov5_path">
+<parameters>
+<parameter id="crop_lack_path"/>
+<parameter id="result_path"/>
+<parameter id="train_images_path"/>
+<parameter id="train_labels_path"/>
+<parameter id="val_images_path"/>
+<parameter id="val_labels_path"/>
+</parameters>
+</docu>
+</procedure>
+<procedure name="gen_yolov5_labels">
+<interface>
+<ic>
+<par name="Row1" base_type="ctrl" dimension="0"/>
+<par name="Column1" base_type="ctrl" dimension="0"/>
+<par name="Row2" base_type="ctrl" dimension="0"/>
+<par name="Column2" base_type="ctrl" dimension="0"/>
+<par name="base_dlength" base_type="ctrl" dimension="0"/>
+<par name="train_labels_path" base_type="ctrl" dimension="0"/>
+<par name="file_name" base_type="ctrl" dimension="0"/>
+<par name="image_width" base_type="ctrl" dimension="0"/>
+<par name="image_height" base_type="ctrl" dimension="0"/>
+</ic>
+</interface>
+<body>
+<l>point_start_row := (Row1 + Row2)*0.5/image_height</l>
+<l>point_start_col := (Column1 + Column2)*0.5/image_width</l>
+<l>lack_width      := ((Column2-Column1)*1.0 + base_dlength)/image_width</l>
+<l>lack_height     := ((Row2-Row1)*1.0 + base_dlength)/image_height</l>
+<c></c>
+<l>open_file (train_labels_path + '/' + file_name + '.txt', 'output', FileHandle)</l>
+<l>for Index := 0 to |point_start_row| - 1 by 1</l>
+<c>    </c>
+<l>    tuple_string (point_start_col[Index], '10.5f', point_start_col_String)</l>
+<l>    tuple_split (point_start_col_String, ' ', point_start_col_String)</l>
+<l>    tuple_string (point_start_row[Index], '10.5f', point_start_row_String)</l>
+<l>    tuple_split (point_start_row_String, ' ', point_start_row_String)</l>
+<l>    tuple_string (lack_width[Index], '10.5f', lack_width_String)</l>
+<l>    tuple_split (lack_width_String, ' ', lack_width_String)</l>
+<l>    tuple_string (lack_height[Index], '10.5f', lack_height_String)</l>
+<l>    tuple_split (lack_height_String, ' ', lack_height_String)</l>
+<l>    values := '0'+ ' ' + point_start_col_String + ' ' +point_start_row_String + ' ' +lack_width_String +  ' ' +lack_height_String</l>
+<l>    fwrite_string (FileHandle, values)</l>
+<l>    fwrite_string (FileHandle, '\n')   </l>
+<l>endfor</l>
+<l>close_file (FileHandle)</l>
+<l>return ()</l>
+</body>
+<docu id="gen_yolov5_labels">
+<parameters>
+<parameter id="Column1"/>
+<parameter id="Column2"/>
+<parameter id="Row1"/>
+<parameter id="Row2"/>
+<parameter id="base_dlength"/>
+<parameter id="file_name"/>
+<parameter id="image_height"/>
+<parameter id="image_width"/>
+<parameter id="train_labels_path"/>
+</parameters>
+</docu>
+</procedure>
+<procedure name="save_crop_lack">
+<interface>
+<io>
+<par name="Image" base_type="iconic" dimension="0"/>
+<par name="Rectangle_lacks" base_type="iconic" dimension="0"/>
+</io>
+<ic>
+<par name="crop_lack_path" base_type="ctrl" dimension="0"/>
+<par name="image_name" base_type="ctrl" dimension="0"/>
+</ic>
+</interface>
+<body>
+<l>count_obj (Rectangle_lacks, Number)</l>
+<l>for lack_Index := 0 to Number - 1 by 1</l>
+<c>    </c>
+<l>    select_obj (Rectangle_lacks, ObjectSelected, lack_Index + 1)</l>
+<l>    reduce_domain (Image, ObjectSelected, ImageReduced)</l>
+<l>    crop_domain (ImageReduced, ImagePart)</l>
+<l>    write_image (ImagePart, 'jpg', 0, crop_lack_path + image_name[0] + '_' +lack_Index)</l>
+<c>    </c>
+<l>endfor</l>
+<c></c>
+<l>return ()</l>
+</body>
+<docu id="save_crop_lack">
+<parameters>
+<parameter id="Image"/>
+<parameter id="Rectangle_lacks"/>
+<parameter id="crop_lack_path"/>
+<parameter id="image_name"/>
+</parameters>
+</docu>
+</procedure>
+<procedure name="open_yolov5_label">
+<interface>
+<ic>
+<par name="Filename" base_type="ctrl" dimension="0"/>
+</ic>
+<oc>
+<par name="row1" base_type="ctrl" dimension="0"/>
+<par name="col1" base_type="ctrl" dimension="0"/>
+<par name="row2" base_type="ctrl" dimension="0"/>
+<par name="col2" base_type="ctrl" dimension="0"/>
+<par name="class" base_type="ctrl" dimension="0"/>
+</oc>
+</interface>
+<body>
+<l>class := []</l>
+<l>row1  := []</l>
+<l>col1  := []</l>
+<l>row2  := []</l>
+<l>col2  := []</l>
+<l>try </l>
+<l>    open_file (Filename, 'input', data)  </l>
+<l>catch (Exception)    </l>
+<l>    return ()</l>
+<l>endtry</l>
+<c></c>
+<l>IsEOF :=0</l>
+<c>** yolov5标注center XY,wh</c>
+<l>while(IsEOF==0)</l>
+<c>    **fead_line读取到EndOfFile就返回0,不然返回0</c>
+<l>    fread_line (data, outLine, IsEOF)</l>
+<c>    *读取到了,按行读出来的是String,给以逗号分割了,然后转成实数存到元组里</c>
+<l>    if(IsEOF==0) </l>
+<c>        *分割出来</c>
+<l>        tuple_split(outLine,', \n',outLineSplit)</l>
+<c>        </c>
+<l>        tuple_number (outLineSplit, outLineSplit)</l>
+<c>        *逐个存到ans元组里边</c>
+<c>        </c>
+<l>        class := [class, outLineSplit[0]]</l>
+<c>        </c>
+<l>        center_row := outLineSplit[2]</l>
+<l>        center_col := outLineSplit[1]</l>
+<l>        w := outLineSplit[3]</l>
+<l>        h := outLineSplit[4]</l>
+<l>        r1 := center_row - 0.5* h</l>
+<l>        r2 := center_row + 0.5* h</l>
+<c>        </c>
+<l>        c1 := center_col - 0.5* w</l>
+<l>        c2 := center_col + 0.5* w</l>
+<l>        row1  := [row1, r1]</l>
+<l>        col1  := [col1, c1]</l>
+<l>        row2  := [row2, r2]</l>
+<l>        col2  := [col2, c2]</l>
+<c>        </c>
+<l>    endif</l>
+<l>endwhile</l>
+<l>close_file (data)</l>
+<l>return ()</l>
+</body>
+<docu id="open_yolov5_label">
+<parameters>
+<parameter id="Filename"/>
+<parameter id="class"/>
+<parameter id="col1"/>
+<parameter id="col2"/>
+<parameter id="row1"/>
+<parameter id="row2"/>
+</parameters>
+</docu>
+</procedure>
+</hdevelop>
